@@ -1,0 +1,28 @@
+Jere north=Omrida south=Celles east=Chronoskis west=Antology
+Clidenstat south=Dige east=Mari west=Phimesu
+Tarpeeze north=Phimesu south=Turnep east=Dige west=Cheabrenta
+Solar north=Cronvanbri east=Varlarbos west=Phantaxthos
+Antology north=Andomi south=Benzarle east=Jere
+Mari south=Glatius west=Clidenstat
+Omrida north=Cheabrenta south=Jere east=Turnep west=Andomi
+Nelicos north=Lascogu south=Stagnibi east=Susveshpo west=Chronoskis
+Phantaxthos north=Celles east=Solar west=Piterra
+Turnep north=Tarpeeze south=Chronoskis east=Lascogu west=Omrida
+Glatius north=Mari south=Phantaxach west=Dige
+Cheabrenta north=Uraro south=Omrida east=Tarpeeze west=Heli
+Lascogu north=Dige south=Nelicos east=Phantaxach west=Turnep
+Dovmars south=Heli east=Uraro
+Benzarle north=Antology south=Piterra east=Celles
+Celles north=Jere south=Phantaxthos east=Cronvanbri west=Benzarle
+Piterra north=Benzarle east=Phantaxthos
+Phantaxach north=Glatius south=Susveshpo west=Lascogu
+Uraro south=Cheabrenta east=Phimesu west=Dovmars
+Varlarbos north=Stagnibi west=Solar
+Heli north=Dovmars south=Andomi east=Cheabrenta
+Dige north=Clidenstat south=Lascogu east=Glatius west=Tarpeeze
+Andomi north=Heli south=Antology east=Omrida
+Phimesu south=Tarpeeze east=Clidenstat west=Uraro
+Susveshpo north=Phantaxach west=Nelicos
+Chronoskis north=Turnep south=Cronvanbri east=Nelicos west=Jere
+Stagnibi north=Nelicos south=Varlarbos west=Cronvanbri
+Cronvanbri north=Chronoskis south=Solar east=Stagnibi west=Celles
