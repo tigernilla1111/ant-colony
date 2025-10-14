@@ -1,10 +1,10 @@
-# 🐜 Ant Colony Simulation
+# Ant Colony Simulation
 
 Simulate a chaotic space ant invasion.
 
 ---
 
-## 🗺️ Overview
+## Overview
 
 You’re given a map of colonies connected by tunnels (`north`, `south`, `east`, `west`).  
 Each line in the map file has the format:
@@ -20,7 +20,7 @@ Ants spawn randomly in colonies and move randomly along tunnels each iteration.
 
 ---
 
-## ⚔️ Rules
+## Rules
 
 - Start with **N ants** (given as a command-line argument).  
 - Each turn, ants move randomly to a connected colony.  
@@ -30,7 +30,7 @@ Ants spawn randomly in colonies and move randomly along tunnels each iteration.
 
 ---
 
-## 💻 Usage
+## Usage
 
 cargo run -- <num_ants>
 
@@ -41,18 +41,18 @@ At the end, the remaining world is printed in the same format as the input.
 
 ---
 
-## 🧪 Example
+## Example
 
 **colony_map.txt**
-Fizz north=Buzz west=Bla
-Buzz south=Fizz west=Blub
-Bla north=Fizz west=Blip east=Blub
-Blip east=Bla south=Blub
-Blub north=Blip west=Bla east=Buzz
+Fizz north=Buzz west=Bla  
+Buzz south=Fizz west=Blub  
+Bla north=Fizz west=Blip east=Blub  
+Blip east=Bla south=Blub  
+Blub north=Blip west=Bla east=Buzz  
 
 **Output:**
-Buzz has been destroyed by 2, 9!
-Fizz has been destroyed by ant 3, 7!
-Bla west=Blip east=Blub
-Blip east=Bla south=Blub
-Blub north=Blip west=Bla
+Buzz has been destroyed by 2, 9!  
+Fizz has been destroyed by ant 3, 7!  
+Bla west=Blip east=Blub  
+Blip east=Bla south=Blub  
+Blub north=Blip west=Bla  
