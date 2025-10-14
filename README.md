@@ -43,14 +43,14 @@ At the end, the remaining world is printed in the same format as the input.
 
 ## Example
 
-**colony_map.txt**
+**colony_map.txt**  
 Fizz north=Buzz west=Bla  
 Buzz south=Fizz west=Blub  
 Bla north=Fizz west=Blip east=Blub  
 Blip east=Bla south=Blub  
 Blub north=Blip west=Bla east=Buzz  
 
-**Output:**
+**Output:**  
 Buzz has been destroyed by 2, 9!  
 Fizz has been destroyed by ant 3, 7!  
 Bla west=Blip east=Blub  
