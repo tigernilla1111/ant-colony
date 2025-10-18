@@ -25,8 +25,6 @@ fn main() {
     let sim = Simulation::try_from_file(&filename, n);
     sim.unwrap().run_simulation();
 }
-struct Colony(String);
-
 struct Simulation {
     /// Stores all Colonies
     colonies: Vec<Colony>,
@@ -157,6 +155,10 @@ impl Simulation {
         })
     }
 }
+struct Colony(String);
+struct Ant {
+    position: ColonyId,
+}
 /// Generates `ColonyId` and adds it to `name_to_id`, `colonies`, `nbor_map`
 fn get_or_create_id(
     name: &str,
@@ -174,10 +176,6 @@ fn get_or_create_id(
         new_id
     }
 }
-struct Ant {
-    position: ColonyId,
-}
-
 #[derive(Hash, PartialEq, Eq, Debug)]
 enum Direction {
     North,
