@@ -7,7 +7,7 @@ use std::hash::Hash;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-type Result<T> = std::result::Result<T, String>;
+type Result<T> = std::result::Result<T, Error>;
 const MAX_ITERATIONS: u32 = 10000;
 
 type ColonyId = u32;
@@ -118,10 +118,10 @@ impl Simulation {
         let mut colonies: Vec<Colony> = Vec::new();
         let mut nbor_map: Vec<HashMap<Direction, ColonyId>> = Vec::new();
         // Generate ColonyIds
-        let reader = get_file_reader(map_filename).unwrap();
+        let reader = get_file_reader(map_filename)?;
         for line in reader.lines() {
             // Go through list and generate HashMap that maps Colony name to the Colony struct instance
-            let line = line.map_err(|_| "error reading line")?;
+            let line = line.map_err(|_| Error::FileReadError)?;
             let split_str = line.split(' ').collect::<Vec<_>>();
             let colony_str = split_str[0].to_string();
 
@@ -211,13 +211,16 @@ fn ant_ids_to_string(ant_ids: &HashSet<AntId>) -> String {
 fn get_file_reader(filename: &str) -> Result<BufReader<File>> {
     // Check if file exists and can be opened
     if !Path::new(filename).exists() {
-        return Err(String::from("File not found"));
+        return Err(Error::FileNotFound);
     }
-    let file = File::open(filename).map_err(|e| format!("Error opening file: {}", e))?;
+    let file = File::open(filename).map_err(|_| Error::FileNotReadable)?;
     let reader = BufReader::new(file);
 
     Ok(reader)
 }
+#[derive(Debug)]
 enum Error {
+    FileNotFound,
+    FileNotReadable,
     FileReadError,
 }
