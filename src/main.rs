@@ -9,7 +9,6 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, String>;
 const MAX_ITERATIONS: u32 = 10000;
-const FILENAME: &str = "maps/map_medium.txt";
 
 type ColonyId = u32;
 type AntId = u32;
@@ -17,10 +16,13 @@ type AntId = u32;
 fn main() {
     let n: u32 = env::args()
         .nth(1)
-        .expect("Please provide n via the command line")
+        .expect("Please provide filename via the command line\nUsage: cargo run -- <number_ants> <filename>")
         .parse()
         .expect("n must be a valid u32");
-    let sim = Simulation::try_from_file(FILENAME, n);
+    let filename = env::args()
+        .nth(2)
+        .expect("Please provide filename via the command line\nUsage: cargo run -- <number_ants> <filename>");
+    let sim = Simulation::try_from_file(&filename, n);
     sim.unwrap().run_simulation();
 }
 struct Colony(String);
@@ -30,7 +32,9 @@ struct Simulation {
     colonies: Vec<Colony>,
     /// Maps a colony to its neighbors i.e. maps a `Colony` to a `HashMap<Direction, Colony>`.
     /// A value of `None` implies the colony has been destroyed
-    nbor_map: Vec<Option<HashMap<Direction, ColonyId>>>,
+    nbor_map: Vec<HashMap<Direction, ColonyId>>,
+    /// Indexed by `ColonyId` where `alive_colonies[<ColonyId>] = true` is whether that colony is alive
+    alive_colonies: Vec<bool>,
     /// Collection of all ants where the AntId is its index in the Vector.
     /// A value of `None` implies the Ant is dead or inactive
     ants: Vec<Option<Ant>>,
@@ -47,7 +51,7 @@ impl Simulation {
             let mut seen_colonies: HashMap<ColonyId, AntId> = HashMap::new();
 
             // For each ant, pick one of the possible neighbors, and move to it
-            // Assumption: Ants move randomly and therefore might revisit a colony
+            // Ants move randomly and therefore might revisit a colony
             let mut are_ants_alive = false;
             for (ant_id, ant_opt) in self.ants.iter_mut().enumerate() {
                 // Skip ant if it is killed or inactive
@@ -55,16 +59,13 @@ impl Simulation {
                     continue;
                 };
                 are_ants_alive = true;
-                let mut neighbors: Vec<&ColonyId> = self.nbor_map[ant.position as usize]
-                    .as_ref()
-                    .unwrap()
-                    .values()
-                    .collect();
+                let mut neighbors: Vec<&ColonyId> =
+                    self.nbor_map[ant.position as usize].values().collect();
 
                 neighbors.shuffle(&mut rng);
                 for &neighbor in neighbors {
                     // Skip if that neighbor was destroyed
-                    if self.nbor_map[neighbor as usize].is_none() {
+                    if !self.alive_colonies[neighbor as usize] {
                         continue;
                     }
                     ant.position = neighbor;
@@ -94,61 +95,48 @@ impl Simulation {
                 for ant in ants {
                     self.ants[ant as usize] = None;
                 }
-                self.nbor_map[colony_id as usize] = None;
+                self.nbor_map[colony_id as usize] = HashMap::new();
+                self.alive_colonies[colony_id as usize] = false;
             }
         }
         // Print neighbor map
         for (col_id, nbors) in self.nbor_map.iter().enumerate() {
             let mut nbor_string = String::new();
-            if let Some(map) = nbors {
-                for (dir, &nbor) in map {
-                    if self.nbor_map[nbor as usize].is_some() {
-                        nbor_string +=
-                            &format!("{}={} ", dir.to_string(), self.colonies[nbor as usize].0);
-                    }
+            for (dir, &nbor) in nbors {
+                if !self.alive_colonies[nbor as usize] {
+                    continue;
                 }
-                println!("{} {}", self.colonies[col_id].0, nbor_string);
+                if self.alive_colonies[nbor as usize] {
+                    nbor_string += &format!("{:?}={} ", dir, self.colonies[nbor as usize].0);
+                }
             }
+            println!("{} {}", self.colonies[col_id].0, nbor_string);
         }
     }
     fn try_from_file(map_filename: &str, n: u32) -> Result<Self> {
         let mut name_to_id: HashMap<String, ColonyId> = HashMap::new();
         let mut colonies: Vec<Colony> = Vec::new();
-        let mut nbor_map: Vec<Option<HashMap<Direction, ColonyId>>> = Vec::new();
-        // Generate Colony instances
+        let mut nbor_map: Vec<HashMap<Direction, ColonyId>> = Vec::new();
+        // Generate ColonyIds
         let reader = get_file_reader(map_filename).unwrap();
         for line in reader.lines() {
             // Go through list and generate HashMap that maps Colony name to the Colony struct instance
             let line = line.map_err(|_| "error reading line")?;
-            let colony_str = line.split(' ').collect::<Vec<_>>()[0].to_string();
+            let split_str = line.split(' ').collect::<Vec<_>>();
+            let colony_str = split_str[0].to_string();
 
             // Generates ID and adds it to name_to_id, colonies, nbor_map
-            let _ = get_or_create_id(&colony_str, &mut name_to_id, &mut colonies, &mut nbor_map);
-        }
-
-        // Generate neighbor map
-        let reader = get_file_reader(map_filename).unwrap();
-        for line in reader.lines() {
-            let line = line.map_err(|_| "error reading line")?;
-            // Assumption: There will be no spaces in the colony names
-            let split_line: Vec<_> = line.split(' ').collect();
-            let colony_str = split_line[0];
-            // Assumption: Every neighbor is listed as a main Colony as well
             let colony_id =
-                get_or_create_id(colony_str, &mut name_to_id, &mut colonies, &mut nbor_map);
+                get_or_create_id(&colony_str, &mut name_to_id, &mut colonies, &mut nbor_map);
 
-            // Get the neighbors
-            for direction_neighbor_str in split_line.iter().skip(1) {
-                let direction_neighbor_split: Vec<_> = direction_neighbor_str.split('=').collect();
+            for nbor_str in split_str.iter().skip(1) {
+                let direction_neighbor_split: Vec<_> = nbor_str.split('=').collect();
                 let direction = Direction::from_str(direction_neighbor_split[0]);
                 let neighbor_str = direction_neighbor_split[1];
-
-                // Pull neighbor colony from colonies
+                // Create or get neighbor's `ColonyId` colony from colonies
                 let neighbor_id =
                     get_or_create_id(neighbor_str, &mut name_to_id, &mut colonies, &mut nbor_map);
-                if let Some(map) = nbor_map[colony_id as usize].as_mut() {
-                    map.insert(direction, neighbor_id);
-                }
+                nbor_map[colony_id as usize].insert(direction, neighbor_id);
             }
         }
 
@@ -162,10 +150,12 @@ impl Simulation {
                 })
             })
             .collect();
+        let alive_colonies = (0..nbor_map.len()).map(|_| true).collect();
 
         Ok(Self {
             colonies,
             nbor_map,
+            alive_colonies,
             ants,
         })
     }
@@ -175,7 +165,7 @@ fn get_or_create_id(
     name: &str,
     name_to_id: &mut HashMap<String, ColonyId>,
     colonies: &mut Vec<Colony>,
-    nbor_map: &mut Vec<Option<HashMap<Direction, ColonyId>>>,
+    nbor_map: &mut Vec<HashMap<Direction, ColonyId>>,
 ) -> ColonyId {
     if let Some(&id) = name_to_id.get(name) {
         id
@@ -183,7 +173,7 @@ fn get_or_create_id(
         let new_id = colonies.len() as ColonyId;
         name_to_id.insert(name.to_string(), new_id);
         colonies.push(Colony(name.to_string()));
-        nbor_map.push(Some(HashMap::new()));
+        nbor_map.push(HashMap::new());
         new_id
     }
 }
@@ -191,7 +181,7 @@ struct Ant {
     position: ColonyId,
 }
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq, Debug)]
 enum Direction {
     North,
     South,
@@ -207,15 +197,6 @@ impl Direction {
             "east" => Self::East,
             "west" => Self::West,
             _ => panic!("tried to create a direction from string {direction_string:?}"),
-        }
-    }
-    #[allow(clippy::inherent_to_string)]
-    fn to_string(&self) -> String {
-        match *self {
-            Direction::North => "north".to_string(),
-            Direction::South => "south".to_string(),
-            Direction::East => "east".to_string(),
-            Direction::West => "west".to_string(),
         }
     }
 }
@@ -236,4 +217,7 @@ fn get_file_reader(filename: &str) -> Result<BufReader<File>> {
     let reader = BufReader::new(file);
 
     Ok(reader)
+}
+enum Error {
+    FileReadError,
 }
