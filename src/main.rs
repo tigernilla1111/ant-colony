@@ -31,9 +31,9 @@ struct Simulation {
     /// Stores all Colonies
     colonies: Vec<Colony>,
     /// Maps a colony to its neighbors i.e. maps a `Colony` to a `HashMap<Direction, Colony>`.
-    /// A value of `None` implies the colony has been destroyed
     nbor_map: Vec<HashMap<Direction, ColonyId>>,
-    /// Indexed by `ColonyId` where `alive_colonies[<ColonyId>] = true` is whether that colony is alive
+    /// Indexed by `ColonyId` where a value of `true` means that colony is still alive
+    /// e.g. `alive_colonies[2] = true` means that colony with id=2 is alive
     alive_colonies: Vec<bool>,
     /// Collection of all ants where the AntId is its index in the Vector.
     /// A value of `None` implies the Ant is dead or inactive
@@ -47,7 +47,7 @@ impl Simulation {
         for _ in 0..MAX_ITERATIONS {
             // Store any collisions for access after each iteration
             let mut ant_collisions: HashMap<ColonyId, HashSet<AntId>> = HashMap::new();
-            // Keeps track of whether there is an Ant and which Ant in a specific colony
+            // Keeps track of which ants are in which colonies at the end of each iteration
             let mut seen_colonies: HashMap<ColonyId, AntId> = HashMap::new();
 
             // For each ant, pick one of the possible neighbors, and move to it
@@ -101,11 +101,11 @@ impl Simulation {
         }
         // Print neighbor map
         for (col_id, nbors) in self.nbor_map.iter().enumerate() {
+            if !self.alive_colonies[col_id] {
+                continue;
+            }
             let mut nbor_string = String::new();
             for (dir, &nbor) in nbors {
-                if !self.alive_colonies[nbor as usize] {
-                    continue;
-                }
                 if self.alive_colonies[nbor as usize] {
                     nbor_string += &format!("{:?}={} ", dir, self.colonies[nbor as usize].0);
                 }
@@ -117,15 +117,12 @@ impl Simulation {
         let mut name_to_id: HashMap<String, ColonyId> = HashMap::new();
         let mut colonies: Vec<Colony> = Vec::new();
         let mut nbor_map: Vec<HashMap<Direction, ColonyId>> = Vec::new();
-        // Generate ColonyIds
         let reader = get_file_reader(map_filename)?;
         for line in reader.lines() {
-            // Go through list and generate HashMap that maps Colony name to the Colony struct instance
+            // Generate a ColonyId for each colony
             let line = line.map_err(|_| Error::FileReadError)?;
             let split_str = line.split(' ').collect::<Vec<_>>();
             let colony_str = split_str[0].to_string();
-
-            // Generates ID and adds it to name_to_id, colonies, nbor_map
             let colony_id =
                 get_or_create_id(&colony_str, &mut name_to_id, &mut colonies, &mut nbor_map);
 
@@ -160,7 +157,7 @@ impl Simulation {
         })
     }
 }
-
+/// Generates `ColonyId` and adds it to `name_to_id`, `colonies`, `nbor_map`
 fn get_or_create_id(
     name: &str,
     name_to_id: &mut HashMap<String, ColonyId>,
