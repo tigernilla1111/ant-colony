@@ -32,10 +32,10 @@ Ants spawn randomly in colonies and move randomly along tunnels each iteration.
 
 ## Usage
 
-cargo run -- <num_ants>
+cargo run -- <num_ants> <map_filename>
 
 Example:
-cargo run -- 100
+cargo run -- 100 maps/map_small.txt
 
 At the end, the remaining world is printed in the same format as the input.
 
